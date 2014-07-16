@@ -1,1 +1,1 @@
-../dotfiles/.zshrc
+../.dotfiles/.zshrc

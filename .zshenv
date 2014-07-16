@@ -1,1 +1,1 @@
-../dotfiles/.zshenv
+../.dotfiles/.zshenv
