@@ -1,1 +1,3 @@
-../dotfiles/del
+del (){
+    mv $* ~/.Trash/
+}
