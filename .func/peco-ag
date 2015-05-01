@@ -1,0 +1,6 @@
+if [ -x "`which ag`" ]; then
+function peco-ag () {
+      ag $@ | peco --query "$LBUFFER" | awk -F : '{print "+" $2 " " $1}' |xargs emacs -nw
+}
+fi 
+
