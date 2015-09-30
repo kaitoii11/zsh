@@ -34,6 +34,7 @@
 : ${ZSH_HIGHLIGHT_STYLES[unknown-token]:=fg=red,bold}
 : ${ZSH_HIGHLIGHT_STYLES[reserved-word]:=fg=yellow}
 : ${ZSH_HIGHLIGHT_STYLES[alias]:=fg=green}
+: ${ZSH_HIGHLIGHT_STYLES[suffix-alias]:=fg=green,underline}
 : ${ZSH_HIGHLIGHT_STYLES[builtin]:=fg=green}
 : ${ZSH_HIGHLIGHT_STYLES[function]:=fg=green}
 : ${ZSH_HIGHLIGHT_STYLES[command]:=fg=green}
@@ -50,6 +51,7 @@
 : ${ZSH_HIGHLIGHT_STYLES[back-quoted-argument]:=none}
 : ${ZSH_HIGHLIGHT_STYLES[single-quoted-argument]:=fg=yellow}
 : ${ZSH_HIGHLIGHT_STYLES[double-quoted-argument]:=fg=yellow}
+: ${ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]:=fg=yellow}
 : ${ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]:=fg=cyan}
 : ${ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]:=fg=cyan}
 : ${ZSH_HIGHLIGHT_STYLES[assign]:=none}
@@ -60,15 +62,32 @@ _zsh_highlight_main_highlighter_predicate()
   _zsh_highlight_buffer_modified
 }
 
+# Helper to deal with tokens crossing line boundaries.
+_zsh_highlight_main_add_region_highlight() {
+  integer start=$1 end=$2
+  local style=$3
+
+  # The calculation was relative to $PREBUFFER$BUFFER, but region_highlight is
+  # relative to $BUFFER.
+  (( start -= $#PREBUFFER ))
+  (( end -= $#PREBUFFER ))
+
+  (( end < 0 )) && return # having end<0 would be a bug
+  (( start < 0 )) && start=0 # having start<0 is normal with e.g. multiline strings
+  region_highlight+=("$start $end $style")
+}
+
 # Main syntax highlighting function.
 _zsh_highlight_main_highlighter()
 {
   emulate -L zsh
   setopt localoptions extendedglob bareglobqual
   local start_pos=0 end_pos highlight_glob=true new_expression=true arg style sudo=false sudo_arg=false
+  local redirection=false # true when we've seen a redirection operator before seeing the command word
   typeset -a ZSH_HIGHLIGHT_TOKENS_COMMANDSEPARATOR
   typeset -a ZSH_HIGHLIGHT_TOKENS_PRECOMMANDS
   typeset -a ZSH_HIGHLIGHT_TOKENS_FOLLOWED_BY_COMMANDS
+  local buf="$PREBUFFER$BUFFER"
   region_highlight=()
 
   ZSH_HIGHLIGHT_TOKENS_COMMANDSEPARATOR=(
@@ -82,12 +101,32 @@ _zsh_highlight_main_highlighter()
     $ZSH_HIGHLIGHT_TOKENS_COMMANDSEPARATOR $ZSH_HIGHLIGHT_TOKENS_PRECOMMANDS
   )
 
-  for arg in ${(z)BUFFER}; do
+  for arg in ${(z)buf}; do
     local substr_color=0
     local style_override=""
-    [[ $start_pos -eq 0 && $arg = 'noglob' ]] && highlight_glob=false
-    ((start_pos+=${#BUFFER[$start_pos+1,-1]}-${#${BUFFER[$start_pos+1,-1]##[[:space:]]#}}))
-    ((end_pos=$start_pos+${#arg}))
+    if $new_expression && [[ $arg = 'noglob' ]]; then
+      highlight_glob=false
+    fi
+
+    # advance $start_pos, skipping over whitespace in $buf.
+    if [[ $arg == ';' ]] ; then
+      # We're looking for either a semicolon or a newline, whichever comes
+      # first.  Both of these are rendered as a ";" (SEPER) by the ${(z)..}
+      # flag.
+      #
+      # We can't use the (Z+n+) flag because that elides the end-of-command
+      # token altogether, so 'echo foo\necho bar' (two commands) becomes
+      # indistinguishable from 'echo foo echo bar' (one command with three
+      # words for arguments).
+      local needle=$'[;\n]'
+      integer offset=${${buf[start_pos+1,-1]}[(i)$needle]}
+      (( start_pos += offset - 1 ))
+      (( end_pos = start_pos + $#arg ))
+    else
+      ((start_pos+=${#buf[$start_pos+1,-1]}-${#${buf[$start_pos+1,-1]##([[:space:]]|\\[[:space:]])#}}))
+      ((end_pos=$start_pos+${#arg}))
+    fi
+
     # Parse the sudo command line
     if $sudo; then
       case "$arg" in
@@ -99,12 +138,12 @@ _zsh_highlight_main_highlighter()
                        sudo_arg=false
                      else
                        sudo=false
-                       new_expression=true
+                       new_expression=true; highlight_glob=true
                      fi
                      ;;
       esac
     fi
-    if $new_expression; then
+    if $new_expression && ! $redirection; then # $arg is the command word
       new_expression=false
      if [[ -n ${(M)ZSH_HIGHLIGHT_TOKENS_PRECOMMANDS:#"$arg"} ]]; then
       style=$ZSH_HIGHLIGHT_STYLES[precommand]
@@ -112,9 +151,12 @@ _zsh_highlight_main_highlighter()
       style=$ZSH_HIGHLIGHT_STYLES[precommand]
       sudo=true
      else
-      res=$(LC_ALL=C builtin type -w $arg 2>/dev/null)
+      local res="$(LC_ALL=C builtin type -w $arg 2>/dev/null)"
       case $res in
         *': reserved')  style=$ZSH_HIGHLIGHT_STYLES[reserved-word];;
+        *': suffix alias')
+                        style=$ZSH_HIGHLIGHT_STYLES[suffix-alias]
+                        ;;
         *': alias')     style=$ZSH_HIGHLIGHT_STYLES[alias]
                         local aliased_command="${"$(alias -- $arg)"#*=}"
                         [[ -n ${(M)ZSH_HIGHLIGHT_TOKENS_FOLLOWED_BY_COMMANDS:#"$aliased_command"} && -z ${(M)ZSH_HIGHLIGHT_TOKENS_FOLLOWED_BY_COMMANDS:#"$arg"} ]] && ZSH_HIGHLIGHT_TOKENS_FOLLOWED_BY_COMMANDS+=($arg)
@@ -125,29 +167,42 @@ _zsh_highlight_main_highlighter()
         *': hashed')    style=$ZSH_HIGHLIGHT_STYLES[hashed-command];;
         *)              if _zsh_highlight_main_highlighter_check_assign; then
                           style=$ZSH_HIGHLIGHT_STYLES[assign]
-                          new_expression=true
+                          if [[ $arg[-1] != '(' ]]; then
+                            # assignment to a scalar parameter.
+                            # (For array assignments, the command doesn't start until the ")" token.)
+                            new_expression=true; highlight_glob=true
+                          fi
                         elif _zsh_highlight_main_highlighter_check_path; then
                           style=$ZSH_HIGHLIGHT_STYLES[path]
-                        elif [[ $arg[0,1] = $histchars[0,1] ]]; then
+                        elif [[ $arg[0,1] == $histchars[0,1] || $arg[0,1] == $histchars[2,2] ]]; then
                           style=$ZSH_HIGHLIGHT_STYLES[history-expansion]
+                        elif [[ $arg[1] == '<' || $arg[1] == '>' ]]; then
+                          style=$ZSH_HIGHLIGHT_STYLE[redirection]
+                          redirection=true
                         else
                           style=$ZSH_HIGHLIGHT_STYLES[unknown-token]
                         fi
                         ;;
       esac
      fi
-    else
+    else # $arg is the file target of a prefix redirection, or a non-command word
+      if $redirection; then
+        redirection=false
+        new_expression=true; highlight_glob=true
+      fi
       case $arg in
         '--'*)   style=$ZSH_HIGHLIGHT_STYLES[double-hyphen-option];;
         '-'*)    style=$ZSH_HIGHLIGHT_STYLES[single-hyphen-option];;
-        "'"*"'") style=$ZSH_HIGHLIGHT_STYLES[single-quoted-argument];;
-        '"'*'"') style=$ZSH_HIGHLIGHT_STYLES[double-quoted-argument]
-                 region_highlight+=("$start_pos $end_pos $style")
+        "'"*)    style=$ZSH_HIGHLIGHT_STYLES[single-quoted-argument];;
+        '"'*)    style=$ZSH_HIGHLIGHT_STYLES[double-quoted-argument]
+                 _zsh_highlight_main_add_region_highlight $start_pos $end_pos $style
                  _zsh_highlight_main_highlighter_highlight_string
                  substr_color=1
                  ;;
-        '`'*'`') style=$ZSH_HIGHLIGHT_STYLES[back-quoted-argument];;
-        *"*"*)   $highlight_glob && style=$ZSH_HIGHLIGHT_STYLES[globbing] || style=$ZSH_HIGHLIGHT_STYLES[default];;
+        \$\'*)   style=$ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]
+                 ;;
+        '`'*)    style=$ZSH_HIGHLIGHT_STYLES[back-quoted-argument];;
+        *[*?]*)  $highlight_glob && style=$ZSH_HIGHLIGHT_STYLES[globbing] || style=$ZSH_HIGHLIGHT_STYLES[default];;
         *)       if _zsh_highlight_main_highlighter_check_path; then
                    style=$ZSH_HIGHLIGHT_STYLES[path]
                  elif [[ $arg[0,1] = $histchars[0,1] ]]; then
@@ -162,8 +217,9 @@ _zsh_highlight_main_highlighter()
     fi
     # if a style_override was set (eg in _zsh_highlight_main_highlighter_check_path), use it
     [[ -n $style_override ]] && style=$ZSH_HIGHLIGHT_STYLES[$style_override]
-    [[ $substr_color = 0 ]] && region_highlight+=("$start_pos $end_pos $style")
+    [[ $substr_color = 0 ]] && _zsh_highlight_main_add_region_highlight $start_pos $end_pos $style
     [[ -n ${(M)ZSH_HIGHLIGHT_TOKENS_FOLLOWED_BY_COMMANDS:#"$arg"} ]] && new_expression=true
+    [[ -n ${(M)ZSH_HIGHLIGHT_TOKENS_COMMANDSEPARATOR:#"$arg"} ]] && highlight_glob=true
     start_pos=$end_pos
   done
 }
@@ -172,7 +228,7 @@ _zsh_highlight_main_highlighter()
 _zsh_highlight_main_highlighter_check_assign()
 {
     setopt localoptions extended_glob
-    [[ $arg == [[:alpha:]_][[:alnum:]_]#(|\[*\])=* ]]
+    [[ $arg == [[:alpha:]_][[:alnum:]_]#(|\[*\])(|[+])=* ]]
 }
 
 # Check if the argument is a path.
@@ -235,6 +291,6 @@ _zsh_highlight_main_highlighter_highlight_string()
       *) [[ $varflag -eq 0 ]] && continue ;;
 
     esac
-    region_highlight+=("$j $k $style")
+    _zsh_highlight_main_add_region_highlight $j $k $style
   done
 }
