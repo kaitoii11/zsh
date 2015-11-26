@@ -1,0 +1,6 @@
+.zcompdump*
+.zhistory
+.zsh-update
+.zsh_history
+.zsh_favlist
+.DS_Store
