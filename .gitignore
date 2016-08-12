@@ -4,3 +4,4 @@
 .zsh_history
 .zsh_favlist
 .DS_Store
+.zcompcache
