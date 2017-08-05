@@ -12,7 +12,7 @@ prompt_segment() {
     [[ -n $1 ]] && bg="%K{$1}" || bg="%k"
     [[ -n $2 ]] && fg="%F{$2}" || fg="%f"
       if [[ $CURRENT_BG != 'NONE' && $1 != $CURRENT_BG ]]; then
-        echo -n " %{$bg%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR%{$fg%} "
+        echo -n " %{$bg%F{$CURRENT_BG}%f%}$SEGMENT_SEPARATOR%{$fg%} "
       else
         echo -n "%{$bg%}%{$fg%} "
           fi
@@ -34,7 +34,7 @@ prompt_end() {
 function build_prompt {
 #prompt_segment black default '%(1?;%{%F{red}%}✘ ;)%(!;%{%F{yellow}%} ;)%(1j;%{%F{cyan}%}%j ;)%{%F{blue}%}%n%{%F{red}%}@%{%F{green}%}%M'
   prompt_segment black default '%1{%F{blue}%}%n%{%F{red}%}@%{%F{green}%}%M'
-    prompt_segment blue black '%2~'
+    prompt_segment blue white '%2~'
     if $git_status; then
       prompt_segment green black '${(e)git_info[prompt]}${git_info[status]}'
         fi
@@ -62,7 +62,7 @@ function prompt_myprompt_setup {
 # Add hook for calling git-info before each command.
     add-zsh-hook precmd prompt_paradox_precmd
 
-    zstyle ':prezto:module:editor:info:completing' format '%B%F{red}...%f%b'
+    zstyle ':prezto:module:editor:info:completing' format '%{%B%F{red}...%f%b%}'
     zstyle ':prezto:module:editor:info:keymap:primary' format '%B%F{blue}❯%f%b'
     zstyle ':prezto:module:editor:info:keymap:primary:overwrite' format '%F{red}♺%f'
     zstyle ':prezto:module:editor:info:keymap:alternate' format '%B%F{red}❮%f%b'
@@ -84,9 +84,8 @@ function prompt_myprompt_setup {
     'status' ' %A%B%S%a%d%m%r%U%u'
 
 # Define prompts.
-    PROMPT='
-  $(build_prompt)
-    ${editor_info[keymap]} '
+    PROMPT='$(build_prompt)
+${editor_info[keymap]} '
     RPS1='%(?,%F{green},%F{red})[%D{%L:%M:%S %p}]'
 # SPROMPT='zsh: correct %F{red}%R%f to %F{green}%r%f [nyae]? '
 }
