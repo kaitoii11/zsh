@@ -235,3 +235,8 @@ export WORKON_HOME=$HOME/.virtualenvs
 if [ -e /opt/local/bin/virtualenvwrapper.sh-2.7 ]; then
   source /opt/local/bin/virtualenvwrapper.sh-2.7
 fi
+
+# kubernetes completion
+if [ type kubectl &> /dev/null ]; then
+  source <(kubectl completion zsh)
+fi
