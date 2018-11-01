@@ -193,9 +193,6 @@ if ! is_screen_or_tmux_running && shell_has_started_interactively; then
   done
 fi
 
-# go Path
-export GOPATH="${HOME}/tests/go"
-#export PATH=$PATH:$GOPATH/bin
 
 # auto-fu
 #source $ZDOTDIR/auto-fu.zsh/auto-fu.zsh
@@ -240,3 +237,13 @@ fi
 if [ type kubectl &> /dev/null ]; then
   source <(kubectl completion zsh)
 fi
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '$HOME/google-cloud-sdk/path.zsh.inc' ]; then source '$HOME/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '$HOME/google-cloud-sdk/completion.zsh.inc' ]; then source '$HOME/google-cloud-sdk/completion.zsh.inc'; fi
+
+# rust + go setting
+export GOPATH="${HOME}/tests/go"
+export PATH="$HOME/.cargo/bin:$GOPATH/bin:$PATH"
