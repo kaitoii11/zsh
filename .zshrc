@@ -67,7 +67,12 @@ zle -N peco-tree-vim
 bindkey "^t" peco-tree-vim
 
 ##case insensitive autocomplete
-autoload -U compinit && compinit
+autoload -U compinit
+if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
+  compinit;
+else
+  compinit -C;
+fi;
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 zstyle ':completion:*:default' menu select=2
 ##zmv
@@ -230,7 +235,7 @@ fi
 
 export WORKON_HOME=$HOME/.virtualenvs
 if [ -e /opt/local/bin/virtualenvwrapper.sh-2.7 ]; then
-  source /opt/local/bin/virtualenvwrapper.sh-2.7
+  source /opt/local/bin/virtualenvwrapper_lazy.sh-2.7
 fi
 
 # kubernetes completion
