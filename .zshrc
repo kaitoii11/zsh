@@ -252,3 +252,5 @@ if [ -f '$HOME/google-cloud-sdk/completion.zsh.inc' ]; then source '$HOME/google
 # rust + go setting
 export GOPATH="${HOME}/tests/go"
 export PATH="$HOME/.cargo/bin:$GOPATH/bin:$PATH"
+
+if [ -e /opt/local/bin/htop ]; then alias top=htop; fi
