@@ -15,9 +15,9 @@ prompt_segment() {
         echo -n " %{$bg%F{$CURRENT_BG}%f%}$SEGMENT_SEPARATOR%{$fg%} "
       else
         echo -n "%{$bg%}%{$fg%} "
-          fi
-          CURRENT_BG=$1
-          [[ -n $3 ]] && print -Pn $3
+      fi
+      CURRENT_BG=$1
+      [[ -n $3 ]] && print -Pn $3
 }
 
 # End the prompt, closing any open segments
