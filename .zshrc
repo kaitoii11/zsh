@@ -12,10 +12,6 @@ fi
 if [ -d "/usr/local/share/zsh/${ZSH_VERSION}/functions" ]; then
   fpath=(/usr/local/share/zsh/${ZSH_VERSION}/functions/ $fpath)
 fi
-if [ -d "$ZDOTDIR/dash" ]; then
-  fpath=($ZDOTDIR/dash $fpath)
-  autoload ${fpath[1]}/*(:t)
-fi
 
 # User configuration
 
@@ -194,14 +190,13 @@ export GOPATH="${HOME}/tests/go"
 #export PATH=$PATH:$GOPATH/bin
 
 # auto-fu
-#source $ZDOTDIR/auto-fu.zsh/auto-fu.zsh
-#function zle-line-init(){
-#  auto-fu-init
-#}
+source $ZDOTDIR/auto-fu.zsh
+function zle-line-init(){
+  auto-fu-init
+}
 zle -N zle-line-init
 # 「-azfu-」を表示させないための記述
-#zstyle ':auto-fu:var' postdisplay $''
-#
+zstyle ':auto-fu:var' postdisplay $''
 
 bindkey '^D' delete-char-or-list
 bindkey -r '^[^D'
