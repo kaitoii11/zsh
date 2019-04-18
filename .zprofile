@@ -17,8 +17,8 @@ fi
 # Editors
 #
 
-export EDITOR='/opt/local/bin/vim'
-export VISUAL='/opt/local/bin/vim'
+export EDITOR='vim'
+export VISUAL='vim'
 export PAGER='less'
 
 #
