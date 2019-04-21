@@ -1,8 +1,8 @@
-export PATH="/opt/local/bin:/usr/local/bin:/opt/local/sbin:/usr/local/lib:/opt/local/include:$PATH"
-
 if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
+
+export PATH="/opt/local/bin:/usr/local/bin:/opt/local/sbin:/usr/local/lib:/opt/local/include:$PATH"
 
 if [ -d "$ZDOTDIR/.func" ]; then
   fpath=($ZDOTDIR/.func $fpath)
@@ -192,15 +192,6 @@ fi
 # go Path
 export GOPATH="${HOME}/tests/go"
 #export PATH=$PATH:$GOPATH/bin
-
-# auto-fu
-source $ZDOTDIR/auto-fu.zsh
-function zle-line-init(){
-  auto-fu-init
-}
-zle -N zle-line-init
-# 「-azfu-」を表示させないための記述
-zstyle ':auto-fu:var' postdisplay $''
 
 bindkey '^D' delete-char-or-list
 bindkey -r '^[^D'
