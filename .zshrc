@@ -101,7 +101,8 @@ setopt AUTOCD
 #add / to directory
 setopt auto_param_slash
 setopt EXTENDED_GLOB
-setopt HIST_IGNORE_ALL_DUPS setopt HIST_FIND_NO_DUPS
+setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_FIND_NO_DUPS
 #C-w
 export WORDCHARS="*?_-.[]~=&;\!#$%^(){}<>"
 
