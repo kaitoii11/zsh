@@ -17,8 +17,8 @@ fi
 # Editors
 #
 
-export EDITOR='/opt/local/bin/vim'
-export VISUAL='/opt/local/bin/vim'
+export EDITOR='vim'
+export VISUAL='vim'
 export PAGER='less'
 
 #
@@ -26,7 +26,7 @@ export PAGER='less'
 #
 
 if [[ -z "$LANG" ]]; then
-  export LANG='ja_JP.UTF-8'
+  export LANG=en_US.UTF-8
 fi
 
 #

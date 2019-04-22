@@ -11,13 +11,13 @@ prompt_segment() {
   local bg fg
     [[ -n $1 ]] && bg="%K{$1}" || bg="%k"
     [[ -n $2 ]] && fg="%F{$2}" || fg="%f"
-      if [[ $CURRENT_BG != 'NONE' && $1 != $CURRENT_BG ]]; then
+    if [[ $CURRENT_BG != 'NONE' && $1 != $CURRENT_BG ]]; then
         echo -n " %{$bg%F{$CURRENT_BG}%f%}$SEGMENT_SEPARATOR%{$fg%} "
-      else
+    else
         echo -n "%{$bg%}%{$fg%} "
-          fi
-          CURRENT_BG=$1
-          [[ -n $3 ]] && print -Pn $3
+    fi
+    CURRENT_BG=$1
+    [[ -n $3 ]] && print -Pn $3
 }
 
 # End the prompt, closing any open segments
@@ -26,62 +26,62 @@ prompt_end() {
     echo -n " %{%k%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR"
   else
     echo -n "%{%k%}"
-      fi
-      echo -n "%{%f%}"
-      CURRENT_BG=''
+  fi
+  echo -n "%{%f%}"
+  CURRENT_BG=''
 }
 
 function build_prompt {
 #prompt_segment black default '%(1?;%{%F{red}%}✘ ;)%(!;%{%F{yellow}%} ;)%(1j;%{%F{cyan}%}%j ;)%{%F{blue}%}%n%{%F{red}%}@%{%F{green}%}%M'
   prompt_segment black default '%1{%F{blue}%}%n%{%F{red}%}@%{%F{green}%}%M'
-    prompt_segment blue white '%2~'
-    if $git_status; then
-      prompt_segment green black '${(e)git_info[prompt]}${git_info[status]}'
-        fi
-        prompt_end
+  prompt_segment blue white '%2~'
+  if $git_status; then
+    prompt_segment green black '${(%e)git_info[prompt]}${git_info[status]}'
+  fi
+  prompt_end
 }
 
 function prompt_paradox_precmd {
   setopt LOCAL_OPTIONS
-    unsetopt XTRACE KSH_ARRAYS
+  unsetopt XTRACE KSH_ARRAYS
 
 # Get Git repository information.
-    if (( $+functions[git-info] )); then
-      git_status=git-info
-    fi
+  if (( $+functions[git-info] )); then
+    git_status=git-info
+  fi
 }
 
 function prompt_myprompt_setup {
   setopt LOCAL_OPTIONS
-    unsetopt XTRACE KSH_ARRAYS
-    prompt_opts=(cr percent subst)
+  unsetopt XTRACE KSH_ARRAYS
+# prompt_opts=(cr percent subst)
 
 # Load required functions.
-    autoload -Uz add-zsh-hook
+  autoload -Uz add-zsh-hook
 
 # Add hook for calling git-info before each command.
-    add-zsh-hook precmd prompt_paradox_precmd
+  add-zsh-hook precmd prompt_paradox_precmd
 
-    zstyle ':prezto:module:editor:info:completing' format '%{%B%F{red}...%f%b%}'
-    zstyle ':prezto:module:editor:info:keymap:primary' format '%B%F{blue}❯%f%b'
-    zstyle ':prezto:module:editor:info:keymap:primary:overwrite' format '%F{red}♺%f'
-    zstyle ':prezto:module:editor:info:keymap:alternate' format '%B%F{red}❮%f%b'
-    zstyle ':prezto:module:git:info:action' format '! %s'
-    zstyle ':prezto:module:git:info:added' format '✚'
-    zstyle ':prezto:module:git:info:ahead' format ''
-    zstyle ':prezto:module:git:info:behind' format ''
-    zstyle ':prezto:module:git:info:branch' format ' %b'
-    zstyle ':prezto:module:git:info:commit' format '➦ %.7c'
-    zstyle ':prezto:module:git:info:deleted' format '✖'
-    zstyle ':prezto:module:git:info:modified' format '✱'
-    zstyle ':prezto:module:git:info:position' format '%p'
-    zstyle ':prezto:module:git:info:renamed' format '➙'
-    zstyle ':prezto:module:git:info:stashed' format 's'
-    zstyle ':prezto:module:git:info:unmerged' format '═'
-    zstyle ':prezto:module:git:info:untracked' format '?'
-    zstyle ':prezto:module:git:info:keys' format \
-    'prompt' '$(coalesce "%b" "%p" "%c")%s' \
-    'status' ' %A%B%S%a%d%m%r%U%u'
+  zstyle ':prezto:module:editor:info:completing' format '%{%B%F{red}...%f%b%}'
+  zstyle ':prezto:module:editor:info:keymap:primary' format '%B%F{blue}❯%f%b'
+  zstyle ':prezto:module:editor:info:keymap:primary:overwrite' format '%F{red}♺%f'
+  zstyle ':prezto:module:editor:info:keymap:alternate' format '%B%F{red}❮%f%b'
+  zstyle ':prezto:module:git:info:action' format '! %s'
+  zstyle ':prezto:module:git:info:added' format '✚'
+  zstyle ':prezto:module:git:info:ahead' format ''
+  zstyle ':prezto:module:git:info:behind' format ''
+  zstyle ':prezto:module:git:info:branch' format ' %b'
+  zstyle ':prezto:module:git:info:commit' format '➦ %.7c'
+  zstyle ':prezto:module:git:info:deleted' format '✖'
+  zstyle ':prezto:module:git:info:modified' format '✱'
+  zstyle ':prezto:module:git:info:position' format '%p'
+  zstyle ':prezto:module:git:info:renamed' format '➙'
+  zstyle ':prezto:module:git:info:stashed' format 's'
+  zstyle ':prezto:module:git:info:unmerged' format '═'
+  zstyle ':prezto:module:git:info:untracked' format '?'
+  zstyle ':prezto:module:git:info:keys' format \
+  'prompt' '$(coalesce "%b" "%p" "%c")%s' \
+  'status' ' %A%B%S%a%d%m%r%U%u'
 
 # Define prompts.
     PROMPT='$(build_prompt)

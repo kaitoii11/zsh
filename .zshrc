@@ -1,7 +1,8 @@
+export PATH="/opt/local/bin:/usr/local/bin:/opt/local/sbin:/usr/local/lib:/opt/local/include:$PATH"
+
 if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
-export PATH="/opt/local/bin:/usr/local/bin:/opt/local/sbin:/usr/local/lib:/opt/local/include:$PATH"
 
 if [ -d "$ZDOTDIR/.func" ]; then
   fpath=($ZDOTDIR/.func $fpath)
@@ -12,9 +13,8 @@ if [ -d "/opt/local/share/zsh/${ZSH_VERSION}/functions" ]; then
   fpath=(/opt/local/share/zsh/${ZSH_VERSION}/functions/ $fpath)
 fi
 
-if [ -d "$ZDOTDIR/dash" ]; then
-  fpath=($ZDOTDIR/dash $fpath)
-  autoload ${fpath[1]}/*(:t)
+if [ -d "/usr/local/share/zsh/${ZSH_VERSION}/functions" ]; then
+  fpath=(/usr/local/share/zsh/${ZSH_VERSION}/functions/ $fpath)
 fi
 
 # User configuration
@@ -58,21 +58,12 @@ if [ -e /opt/local/var/macports/software/zsh-completions ]; then
   fpath=(/opt/local/var/macports/software/zsh-completions $fpath)
 fi
 
-if [ -e /opt/local/share/zsh/${ZSH_VERSION}/functions ]; then
-  fpath=(/opt/local/share/zsh/${ZSH_VERSION}/functions $fpath)
-fi
-
 #autoload functions
 zle -N peco-tree-vim
 bindkey "^t" peco-tree-vim
 
 ##case insensitive autocomplete
-autoload -U compinit
-if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
-  compinit;
-else
-  compinit -C;
-fi;
+autoload -U compinit && compinit
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 zstyle ':completion:*:default' menu select=2
 ##zmv
@@ -198,16 +189,18 @@ if ! is_screen_or_tmux_running && shell_has_started_interactively; then
   done
 fi
 
+# go Path
+export GOPATH="${HOME}/tests/go"
+#export PATH=$PATH:$GOPATH/bin
 
 # auto-fu
-#source $ZDOTDIR/auto-fu.zsh/auto-fu.zsh
-#function zle-line-init(){
-#  auto-fu-init
-#}
+source $ZDOTDIR/auto-fu.zsh
+function zle-line-init(){
+  auto-fu-init
+}
 zle -N zle-line-init
 # 「-azfu-」を表示させないための記述
-#zstyle ':auto-fu:var' postdisplay $''
-#
+zstyle ':auto-fu:var' postdisplay $''
 
 bindkey '^D' delete-char-or-list
 bindkey -r '^[^D'
@@ -234,7 +227,7 @@ fi
 # virtualenv
 
 export WORKON_HOME=$HOME/.virtualenvs
-if [ -e /opt/local/bin/virtualenvwrapper.sh-2.7 ]; then
+if [ -e /opt/local/bin/virtualenvwrapper_lazy.sh-2.7 ]; then
   source /opt/local/bin/virtualenvwrapper_lazy.sh-2.7
 fi
 
@@ -253,4 +246,5 @@ if [ -f '$HOME/google-cloud-sdk/completion.zsh.inc' ]; then source '$HOME/google
 export GOPATH="${HOME}/tests/go"
 export PATH="$HOME/.cargo/bin:$GOPATH/bin:$PATH"
 
-if [ -e /opt/local/bin/htop ]; then alias top=htop; fi
+if [ type htop &> /dev/null ]; then alias top=htop; fi
+
