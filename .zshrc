@@ -9,6 +9,9 @@ if [ -d "$ZDOTDIR/.func" ]; then
   autoload ${fpath[1]}/*(:t)
 fi
 
+# source completion file
+fpath=(~/.zsh/completions $fpath)
+
 if [ -d "/opt/local/share/zsh/${ZSH_VERSION}/functions" ]; then
   fpath=(/opt/local/share/zsh/${ZSH_VERSION}/functions/ $fpath)
 fi
@@ -58,12 +61,22 @@ if [ -e /opt/local/var/macports/software/zsh-completions ]; then
   fpath=(/opt/local/var/macports/software/zsh-completions $fpath)
 fi
 
+if [ -e /opt/local/share/zsh/${ZSH_VERSION}/functions ]; then
+  fpath=(/opt/local/share/zsh/${ZSH_VERSION}/functions $fpath)
+fi
+
 #autoload functions
 zle -N peco-tree-vim
 bindkey "^t" peco-tree-vim
 
 ##case insensitive autocomplete
-autoload -U compinit && compinit
+autoload -U compinit
+if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
+  compinit;
+else
+  compinit -C;
+fi;
+##case insensitive autocomplete
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 zstyle ':completion:*:default' menu select=2
 ##zmv
@@ -88,8 +101,7 @@ setopt AUTOCD
 #add / to directory
 setopt auto_param_slash
 setopt EXTENDED_GLOB
-setopt HIST_IGNORE_ALL_DUPS
-setopt HIST_FIND_NO_DUPS
+setopt HIST_IGNORE_ALL_DUPS setopt HIST_FIND_NO_DUPS
 #C-w
 export WORDCHARS="*?_-.[]~=&;\!#$%^(){}<>"
 
@@ -216,9 +228,8 @@ if [ -e /usr/bin/xsel ]; then
 fi
 
 # virtualenv
-
 export WORKON_HOME=$HOME/.virtualenvs
-if [ -e /opt/local/bin/virtualenvwrapper_lazy.sh-2.7 ]; then
+if [ -e /opt/local/bin/virtualenvwrapper.sh-2.7 ]; then
   source /opt/local/bin/virtualenvwrapper_lazy.sh-2.7
 fi
 
@@ -238,4 +249,3 @@ export GOPATH="${HOME}/tests/go"
 export PATH="$HOME/.cargo/bin:$GOPATH/bin:$PATH"
 
 if [ type htop &> /dev/null ]; then alias top=htop; fi
-
