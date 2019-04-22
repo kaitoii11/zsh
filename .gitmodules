@@ -1,3 +1,6 @@
 [submodule "dash"]
 	path = dash
 	url = https://github.com/kaitoii11/dash.git
+[submodule ".zprezto"]
+	path = .zprezto
+	url = https://github.com/sorin-ionescu/prezto.git
