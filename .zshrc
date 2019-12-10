@@ -236,6 +236,7 @@ fi
 
 # kubernetes completion
 if [ type kubectl &> /dev/null ]; then
+  alias k="kubectl"
   source <(kubectl completion zsh)
 fi
 
@@ -250,3 +251,5 @@ export GOPATH="${HOME}/tests/go"
 export PATH="$HOME/.cargo/bin:$GOPATH/bin:$PATH"
 
 if [ type htop &> /dev/null ]; then alias top=htop; fi
+
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
